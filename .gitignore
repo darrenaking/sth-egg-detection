@@ -1,3 +1,27 @@
+#--------------------------------------------------------------------------------
+# PROJECT-SPECIFIC
+#--------------------------------------------------------------------------------
+
+# Data files (too large for git)
+data/raw/
+data/processed/
+*.zip
+
+# Model checkpoints
+*.pth
+*.pt
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Weights & Biases
+wandb/
+
+
+#--------------------------------------------------------------------------------
+# GENERIC
+#--------------------------------------------------------------------------------
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
