@@ -17,6 +17,10 @@ data/processed/
 # Weights & Biases
 wandb/
 
+# Keep data directory structure even though contents are ignored
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
 
 #--------------------------------------------------------------------------------
 # GENERIC
