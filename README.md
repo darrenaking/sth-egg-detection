@@ -35,16 +35,11 @@ pip install -r requirements.txt
 
 ## Data
 
-The primary dataset is the ICIP 2022 Parasitic Egg Detection Challenge (~13,200 microscopy images, 11 species, COCO-format annotations).
-
-1. Download from https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images
-2. Place the zip in `data/raw/`
-3. Extract so the contents are in `data/raw/icip2022/`
+The primary dataset is Chula-ParasiteEgg-11 from the ICIP 2022 Parasitic Egg Detection Challenge (~13,200 microscopy images, 11 species, COCO-format annotations). Download from [HuggingFace](https://huggingface.co/datasets/pui-nantheera/Parasitic_Egg_Detection_and_Classification_in_Microscopic_Images/tree/main) or [IEEE](https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images)
 
 Do not commit data files to git.
 
 ## Conventions
 
-- Notebooks are numbered: `01_data_exploration.ipynb`, `02_baseline.ipynb`, etc.
 - Clear notebook outputs before committing: `jupyter nbconvert --clear-output --inplace notebooks/*.ipynb`
 - Commit messages use imperative tense: "Add feature" not "Added feature"

@@ -15,10 +15,30 @@ REPO_ID = "pui-nantheera/Parasitic_Egg_Detection_and_Classification_in_Microscop
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 
 DOWNLOADS = [
-    {"file": "Chula-ParasiteEgg-11.zip", "extract_to": "Chula-ParasiteEgg-11"},
-    {"file": "Chula-ParasiteEgg-11_test.zip", "extract_to": "test"},
-    {"file": "test_labels_200.json", "extract_to": None},
+    {
+        "file": "Chula-ParasiteEgg-11.zip",
+        "extracts_as": "Chula-ParasiteEgg-11",
+        "final_name": "train",
+    },
+    {
+        "file": "Chula-ParasiteEgg-11_test.zip",
+        "extracts_as": "test",
+        "final_name": "test",
+    },
+    {
+        "file": "test_labels_200.json",
+        "extracts_as": None,
+        "final_name": None,
+    },
 ]
+
+
+def _already_extracted(entry):
+    """Check if data exists under either the original or final name."""
+    for name in (entry["final_name"], entry["extracts_as"]):
+        if name and (DATA_DIR / name).exists():
+            return True
+    return False
 
 
 def download():
@@ -26,9 +46,8 @@ def download():
     for entry in DOWNLOADS:
         f = entry["file"]
         dest = DATA_DIR / f
-        extracted = entry["extract_to"]
 
-        if extracted and (DATA_DIR / extracted).exists():
+        if _already_extracted(entry):
             print(f"Already extracted, skipping download: {f}")
             continue
         if dest.exists():
@@ -48,14 +67,12 @@ def download():
 def extract():
     for entry in DOWNLOADS:
         f = entry["file"]
-        extracted = entry["extract_to"]
-        if extracted is None:
+        if entry["extracts_as"] is None:
             continue
 
         zip_path = DATA_DIR / f
-        extract_dir = DATA_DIR / extracted
 
-        if extract_dir.exists():
+        if _already_extracted(entry):
             print(f"Already extracted, skipping: {f}")
             continue
         if not zip_path.exists():
@@ -72,6 +89,16 @@ def extract():
     print("Extraction complete.")
 
 
+def reorganize():
+    # Flatten Chula-ParasiteEgg-11/Chula-ParasiteEgg-11/ → train/
+    old = DATA_DIR / "Chula-ParasiteEgg-11" / "Chula-ParasiteEgg-11"
+    new = DATA_DIR / "train"
+    if old.exists() and not new.exists():
+        old.rename(new)
+        (DATA_DIR / "Chula-ParasiteEgg-11").rmdir()
+        print("Renamed Chula-ParasiteEgg-11/Chula-ParasiteEgg-11 → train")
+
+
 def cleanup():
     junk = [
         DATA_DIR / ".cache",
@@ -82,17 +109,23 @@ def cleanup():
             shutil.rmtree(path)
             print(f"Removed {path.relative_to(DATA_DIR)}")
 
+    for entry in DOWNLOADS:
+        zip_path = DATA_DIR / entry["file"]
+        if zip_path.suffix == ".zip" and zip_path.exists():
+            zip_path.unlink()
+            print(f"Removed {zip_path.name}")
+
 
 def verify():
     counts = {}
     for entry in DOWNLOADS:
-        extracted = entry["extract_to"]
-        if extracted is None:
+        final = entry["final_name"]
+        if final is None:
             continue
-        extract_dir = DATA_DIR / extracted
+        extract_dir = DATA_DIR / final
         images = list(extract_dir.rglob("*.jpg"))
-        counts[extracted] = len(images)
-        print(f"  {extracted}: {len(images)} images")
+        counts[final] = len(images)
+        print(f"  {final}: {len(images)} images")
     return counts
 
 
@@ -112,6 +145,7 @@ def main():
     download()
     print()
     extract()
+    reorganize()
     cleanup()
     print()
     print("Verification:")
