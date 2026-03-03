@@ -21,8 +21,8 @@ wandb/
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 
-# EDA notebook
-notebooks/eda.ipynb
+# Notebooks
+notebooks/colour_analysis.ipynb
 
 
 #--------------------------------------------------------------------------------
