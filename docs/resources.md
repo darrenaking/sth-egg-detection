@@ -11,3 +11,4 @@
   - [Potentially relevant data collected with smartphones](https://air.ug/microscopy/)
 - [Another parasite egg detection paper with a dataset collected using low cost methods in the field](https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0010500)
   - [Dataset on Kaggle](https://www.kaggle.com/datasets/peterkward/ai4ntd-p1-5)
+- [Survey article on domain adaptation methods in medical research](https://pmc.ncbi.nlm.nih.gov/articles/PMC9011180/pdf/nihms-1794910.pdf)
