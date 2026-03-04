@@ -8,4 +8,6 @@
 ## Other data sources / labs
 
 - [Ugandan research lab working on these exact problems](https://air.ug/)
-  - [Potentially relevant data](https://air.ug/microscopy/)
+  - [Potentially relevant data collected with smartphones](https://air.ug/microscopy/)
+- [Another parasite egg detection paper with a dataset collected using low cost methods in the field](https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0010500)
+  - [Dataset on Kaggle](https://www.kaggle.com/datasets/peterkward/ai4ntd-p1-5)
