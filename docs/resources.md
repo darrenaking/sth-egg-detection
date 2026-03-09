@@ -12,3 +12,7 @@
 - [Another parasite egg detection paper with a dataset collected using low cost methods in the field](https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0010500)
   - [Dataset on Kaggle](https://www.kaggle.com/datasets/peterkward/ai4ntd-p1-5)
 - [Survey article on domain adaptation methods in medical research](https://pmc.ncbi.nlm.nih.gov/articles/PMC9011180/pdf/nihms-1794910.pdf)
+
+- From lead author of ICIP challenge
+  - I think the raw data for the challenge is [here](https://zenodo.org/records/15866298) (but her email was so terse I'm not fully sure)
+  - They did a follow up [paper](https://link.springer.com/article/10.1007/s42979-023-02406-8) where they analyzed data from low-cost USB microscopes, and she generously shared the data [here](https://uob-my.sharepoint.com/personal/eexna_bristol_ac_uk/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Feexna%5Fbristol%5Fac%5Fuk%2FDocuments%2FParasiteEggs%2FUSB%20microscope&ga=1)
