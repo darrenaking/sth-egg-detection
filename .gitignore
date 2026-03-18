@@ -8,6 +8,7 @@ data/processed/
 *.zip
 
 # Model checkpoints
+checkpoints/
 *.pth
 *.pt
 
@@ -23,6 +24,12 @@ wandb/
 
 # Notebooks
 notebooks/colour_analysis.ipynb
+
+# Design docs (draft)
+docs/train_design_decisions.txt
+
+# Claude Code
+CLAUDE.md
 
 
 #--------------------------------------------------------------------------------
@@ -235,4 +242,4 @@ cython_debug/
 # Marimo
 marimo/_static/
 marimo/_lsp/
-__marimo__/
+__marimo__/wandb/

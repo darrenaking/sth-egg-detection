@@ -57,6 +57,24 @@ def build_dataframe(images, annotations, categories, image_dir):
         annotations = pd.concat(
             [annotations.drop(columns=["bbox"]), bbox_df], axis=1
         )
+        # Clip bboxes to image boundaries
+        img_dims = images[["id", "width", "height"]].rename(columns={"id": "image_id"})
+        annotations = annotations.merge(img_dims, on="image_id")
+        x_max = (annotations["bbox_x"] + annotations["bbox_w"])
+        y_max = (annotations["bbox_y"] + annotations["bbox_h"])
+        oob = (annotations["bbox_x"] < 0) | (annotations["bbox_y"] < 0) | (x_max > annotations["width"]) | (y_max > annotations["height"])
+        if oob.any():
+            print(f"  Clipping {oob.sum()} out-of-bounds bboxes to image boundaries.")
+        x_min = annotations["bbox_x"].clip(lower=0)
+        y_min = annotations["bbox_y"].clip(lower=0)
+        x_max_clipped = (annotations["bbox_x"] + annotations["bbox_w"]).clip(upper=annotations["width"])
+        y_max_clipped = (annotations["bbox_y"] + annotations["bbox_h"]).clip(upper=annotations["height"])
+        annotations["bbox_x"] = x_min
+        annotations["bbox_y"] = y_min
+        annotations["bbox_w"] = x_max_clipped - x_min
+        annotations["bbox_h"] = y_max_clipped - y_min
+        annotations = annotations.drop(columns=["width", "height"])
+
         annotations["category_name"] = annotations["category_id"].map(categories)
         annotations = annotations.rename(columns={"id": "annotation_id"})
 

@@ -1,0 +1,107 @@
+# Debug config — 2 epochs, no W&B, for testing the pipeline
+# Run with: python scripts/train.py --config configs/debug.yaml --no-wandb
+
+# ─── Metadata ──────────────────────────────────────────────────────────
+metadata:
+  dataset: "chula-parasiteegg-11"
+  source: "huggingface"
+  backbone: "resnet50_fpn"
+
+# ─── Model ───────────────────────────────────────────────────────────
+model:
+  pretrained_weights: "COCO_V1"        # pinned; "DEFAULT" may change across torchvision versions
+  num_classes: 12                      # 11 parasite egg classes + 1 background
+  trainable_backbone_layers: 2         # stem, layer1, layer2  <- frozen | train -> layer3, layer4
+
+# ─── Freeze Schedule ────────────────────────────────────────────────
+# unfreeze_after_epoch: 2 - frozen epochs 1-2, trains from epoch 3
+# Use the exact PyTorch stage names (like layer3)
+# No temporary freezing - temporary: {}
+freeze_schedule:
+  temporary:
+    layer3:
+      unfreeze_after_epoch: 2
+    layer4:
+      unfreeze_after_epoch: 3
+
+# ─── Optimizer ───────────────────────────────────────────────────────
+optimizer:
+  type: "sgd"                           # "sgd" or "adam". sgd w/ momentum is standard for object detection
+  lr: 0.005                             # base lr. controlled by scheduler
+  momentum: 0.9                         # ignored if adam
+  weight_decay: 0.0005                  # L2 penalization coefficient * 2 if sgd
+  clip_grad_norm: 1.0                   # max gradient norm (0 to disable). newly unfrozen layer can produce large stupid gradients
+
+  # After unfreezing stages use base lr × their multiplier.
+  # Same reason as freeze; earlier layers pretty well trained already don't want to rubbish them
+  lr_multipliers:
+    backbone: 0.1
+    fpn: 1.0
+    heads: 1.0
+
+# ─── LR Scheduler ───────────────────────────────────────────────────
+scheduler:
+  warmup_epochs: 1                     # linear warmup from warmup_start_factor × lr
+  warmup_start_factor: 0.001           # initial LR = lr × this
+  type: "cosine"                       # "step", "cosine", "multistep"
+  # for cosine:
+  eta_min: 0.00001                     # for cosine: minimum LR at end of schedule
+  # for step or multistep:
+  step_size: 5                         # for step: drop LR every N epochs
+  milestones: [12, 18]                 # for multistep: epochs at which LR drops
+  gamma: 0.1                           # for step/multistep: multiply LR by this factor
+
+
+# ─── Training ───────────────────────────────────────────────────────
+training:
+  seed: 42
+  epochs: 2
+  batch_size: 2                        # 2 is typical for faster r-cnn fine-tuning. larger batches -> more stable gradient estimates
+  num_workers: 2
+  amp: false                            # mixed precision (enable on supported GPUs). can make training less stable
+
+# ─── Data ────────────────────────────────────────────────────────────
+data:
+  annotations_csv: "data/processed/train_annotations.csv"
+  image_dir: "data/raw/train/data"
+  max_images: 50                       # limit dataset size (0 = use all images)
+  augmentations:
+    horizontal_flip: true
+    vertical_flip: false
+    rotate:
+      enabled: false
+      limit: 30
+    color_jitter:
+      enabled: false
+      brightness: 0.2
+      contrast: 0.2
+      saturation: 0.2
+      hue: 0.1
+    min_visibility: 0.3                # drop boxes with less than this fraction visible
+
+# ─── Validation ───────────────────────────────────────────────────
+validation:
+  strategy: "split"                    # "split" or "kfold"
+  # for split
+  val_split: 0.2
+  # for kfold:
+  num_folds: 5                        # same seed, same num_folds, same data => same split
+  fold: 1                             # which fold to train on this run (1-indexed)
+  eval_metrics:                          # metrics to compute and log each val epoch
+    - "mAP@0.5"
+    - "mAP@0.5:0.95"
+
+# ─── Checkpointing ────────────────────────────────────────────────
+checkpoint:
+  dir: "checkpoints"
+  save_best: true                      # save model with best val metric
+  monitor: "mAP@0.5"                   # metric to monitor for save_best
+  save_every_n_epochs: 0               # saves every regardless of performance (0 to disable)
+  early_stopping_patience: 0           # stop if no improvement for N consecutive epochs (0 to disable)
+
+# ─── Weights & Biases ───────────────────────────────────────────────
+wandb:
+  project: "sth-egg-detection"
+  tags: ["faster-rcnn", "resnet50-fpn"]
+  log_gradient_norms: true             # log backbone vs head gradient norms
+  log_every_n_steps: 10

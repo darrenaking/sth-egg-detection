@@ -1,6 +1,14 @@
+albumentations
 huggingface_hub
 matplotlib
-numpy
+numpy<2
 pandas
 Pillow
+pycocotools
+pyyaml
+scikit-learn
 scipy
+torch
+torchmetrics
+torchvision
+wandb
