@@ -8,7 +8,7 @@ pycocotools
 pyyaml
 scikit-learn
 scipy
-torch
+torch>=2.0
 torchmetrics
-torchvision
+torchvision>=0.15
 wandb

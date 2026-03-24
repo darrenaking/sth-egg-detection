@@ -15,12 +15,11 @@ sth-egg-detection/
 │   └── processed/         — derived data, safe to delete and regenerate
 ├── notebooks/             — Try stuff here. Move reusable code to src/
 ├── src/
-│   ├── data/              — dataset loading code
-│   ├── models/            — model definitions
-│   └── utils/             — shared helpers (visualization, metrics)
+│   ├── data/              — dataset loading, augmentations
+│   └── models/            — model definitions
 ├── configs/               — experiment settings (YAML files)
-├── scripts/               — command-line scripts (download, train, evaluate)
-├── experiments/           — training run outputs, one subfolder per run
+├── scripts/               — command-line scripts (download, process, train)
+├── checkpoints/           — training run outputs, one subfolder per run
 └── docs/                  — plain-language notes and design decisions
 ```
 
@@ -38,6 +37,29 @@ pip install -r requirements.txt
 The primary dataset is Chula-ParasiteEgg-11 from the ICIP 2022 Parasitic Egg Detection Challenge (~13,200 microscopy images, 11 species, COCO-format annotations). Download from [HuggingFace](https://huggingface.co/datasets/pui-nantheera/Parasitic_Egg_Detection_and_Classification_in_Microscopic_Images/tree/main) or [IEEE](https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images)
 
 Do not commit data files to git.
+
+## Pipeline
+
+Run these in order:
+
+```bash
+# 1. Download dataset from HuggingFace → data/raw/
+python scripts/download_data.py
+
+# 2. Convert COCO JSON annotations → data/processed/train_annotations.csv
+python scripts/process_annotations.py
+
+# 3. Train (baseline config, ~20 epochs)
+python scripts/train.py --config configs/faster_rcnn_baseline.yaml
+
+# Quick debug run (4 epochs, 50 images, no W&B)
+python scripts/train.py --config configs/faster_rcnn_debug.yaml --no-wandb
+
+# Resume from a checkpoint
+python scripts/train.py --config configs/faster_rcnn_baseline.yaml --resume checkpoints/<run>/last.pt
+```
+
+See `docs/train_design_decisions.txt` for rationale behind training choices.
 
 ## Conventions
 

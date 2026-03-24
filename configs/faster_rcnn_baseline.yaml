@@ -14,6 +14,8 @@ model:
   trainable_backbone_layers: 2         # stem, layer1, layer2  <- frozen | train -> layer3, layer4
 
 # ─── Freeze Schedule ────────────────────────────────────────────────
+# Temporary freezing for layer3/layer4 only — stem/layer1/layer2 are
+# permanently frozen by trainable_backbone_layers above (different mechanism).
 # unfreeze_after_epoch: 2 - frozen epochs 1-2, trains from epoch 3
 # Use the exact PyTorch stage names (like layer3)
 # No temporary freezing - temporary: {}
@@ -26,7 +28,7 @@ freeze_schedule:
 
 # ─── Optimizer ───────────────────────────────────────────────────────
 optimizer:
-  type: "sgd"                           # "sgd" or "adam". sgd w/ momentum is standard for object detection
+  type: "sgd"                           # "sgd" or "adamw". sgd w/ momentum is standard for object detection
   lr: 0.005                             # base lr. controlled by scheduler
   momentum: 0.9                         # ignored if adam
   weight_decay: 0.0005                  # L2 penalization coefficient * 2 if sgd
@@ -87,9 +89,7 @@ validation:
   # for kfold:
   num_folds: 5                        # same seed, same num_folds, same data => same split            
   fold: 1                             # which fold to train on this run (1-indexed)
-  eval_metrics:                          # metrics to compute and log each val epoch
-    - "mAP@0.5"
-    - "mAP@0.5:0.95"
+  # Validation computes and logs: mAP@0.5, mAP@0.5:0.95
 
 # ─── Checkpointing ────────────────────────────────────────────────
 checkpoint:

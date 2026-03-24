@@ -1,5 +1,6 @@
 """
 Process COCO-format annotations into flat CSVs for analysis.
+Pipeline step 2 of 3: download_data.py → process_annotations.py → train.py
 Usage: python scripts/process_annotations.py
 """
 

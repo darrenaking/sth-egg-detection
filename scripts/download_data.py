@@ -1,5 +1,6 @@
 """
 Download and extract Chula-ParasiteEgg-11 dataset from HuggingFace.
+Pipeline step 1 of 3: download_data.py → process_annotations.py → train.py
 Usage: python scripts/download_data.py
 """
 

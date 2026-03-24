@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class EggDetectionDataset(Dataset):
-    def __init__(self, annotations_csv, image_dir, image_ids=None, transforms=None, max_images=None):
+    def __init__(self, annotations_csv, image_dir, image_ids=None, transforms=None):
         self.image_dir = Path(image_dir)
         self.transforms = transforms
 
@@ -19,9 +19,11 @@ class EggDetectionDataset(Dataset):
         if image_ids is not None:
             df = df[df["image_id"].isin(image_ids)]
         self.image_ids = df["image_id"].unique()
-        if max_images:
-            self.image_ids = self.image_ids[:max_images]
         self.annotations = df.groupby("image_id")
+
+        # Class name mapping: model label (category_id + 1) -> name
+        id_to_name = df.drop_duplicates("category_id").set_index("category_id")["category_name"]
+        self.class_names = {cid + 1: name for cid, name in id_to_name.items()}
 
     def __len__(self):
         return len(self.image_ids)
@@ -33,8 +35,9 @@ class EggDetectionDataset(Dataset):
         file_name = records.iloc[0]["file_name"]
         image = Image.open(self.image_dir / file_name).convert("RGB")
 
+        # Bbox format: COCO xywh (CSV) → Pascal VOC xyxy (here) → stays xyxy
+        # through augmentations (format="pascal_voc") and into the model.
         boxes = records[["bbox_x", "bbox_y", "bbox_w", "bbox_h"]].values.copy()
-        # Convert [x, y, w, h] to [x_min, y_min, x_max, y_max]
         boxes[:, 2] = boxes[:, 0] + boxes[:, 2]
         boxes[:, 3] = boxes[:, 1] + boxes[:, 3]
 
@@ -50,6 +53,11 @@ class EggDetectionDataset(Dataset):
 
         if self.transforms:
             image = np.array(image)
+            # Augmentations with min_visibility can drop all boxes (e.g., rotation
+            # pushing them out of frame). Retry up to 10 times; fall back to
+            # un-augmented image if all attempts fail. Faster R-CNN requires at
+            # least one box per image. With current augmentations (horizontal flip
+            # only) this retry effectively never triggers.
             augmented = False
             for _ in range(10):
                 transformed = self.transforms(
