@@ -24,6 +24,39 @@ wandb/
 # EDA notebook
 notebooks/eda.ipynb
 
+#--------------------------------------------------------------------------------
+# Dan
+#--------------------------------------------------------------------------------
+
+# Python Caches
+__pycache__/
+*.py[cod]
+
+# YOLO & PyTorch Model Weights
+*.pt
+*.pth
+*.onnx
+
+# Data & System Caches
+*.cache
+*.zip
+*.ndjson
+*.jpg
+*.jpeg
+*.png
+*.json
+
+# Ignore the entire Data folder
+/data/
+
+# Ignore YOLO Training Outputs (Prediction images, massive logs)
+/runs/
+
+# Virtual Environments (If you use them later)
+venv/
+env/
+.env
+
 
 #--------------------------------------------------------------------------------
 # GENERIC
