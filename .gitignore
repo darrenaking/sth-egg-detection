@@ -3,8 +3,7 @@
 #--------------------------------------------------------------------------------
 
 # Data files (too large for git)
-data/raw/
-data/processed/
+src/data/
 *.zip
 
 # Model checkpoints
@@ -18,8 +17,8 @@ data/processed/
 wandb/
 
 # Keep data directory structure even though contents are ignored
-!data/raw/.gitkeep
-!data/processed/.gitkeep
+!src/data/raw/.gitkeep
+!src/data/processed/.gitkeep
 
 # EDA notebook
 notebooks/eda.ipynb
@@ -47,10 +46,11 @@ __pycache__/
 *.json
 
 # Ignore the entire Data folder
-/data/
+src/data
 
 # Ignore YOLO Training Outputs (Prediction images, massive logs)
-/runs/
+experiments/yolo_runs/
+configs/
 
 # Virtual Environments (If you use them later)
 venv/

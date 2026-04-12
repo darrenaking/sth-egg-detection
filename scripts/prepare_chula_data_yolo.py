@@ -206,5 +206,5 @@ def build_dataset(target_dir):
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.abspath(os.path.join(script_dir, "..", "data", "chula_yolo"))
+    data_dir = os.path.abspath(os.path.join(script_dir, "..", "src", "data", "chula_yolo"))
     build_dataset(data_dir)
