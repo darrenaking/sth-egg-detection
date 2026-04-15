@@ -5,17 +5,19 @@ import torch
 from ultralytics import YOLO
 from email_complete import send_training_notification
 import glob
+import time
 
 
 """ DO NOT CHANGE: SET BY DATA PREPROCESSING CHOICE """
+""" ----------------------------------------------- """
 IMGSZ = 800
 """ ----------------------------------------------- """
 
 
 def unpack_ndjson_and_build_yaml(data_dir, yaml_path):
     """
-    reads master NDJSON files and  unpack them into yolo text format.
-    will skip the unpacking process if the labels already exist.
+    read master NDJSON files and  unpack them into yolo text format.
+    skip the unpacking process if the labels already exist.
     """
     train_ndjson = os.path.join(data_dir, "processed", "train_annotations.ndjson")
     val_ndjson = os.path.join(data_dir, "processed", "val_annotations.ndjson")
@@ -69,28 +71,6 @@ def unpack_ndjson_and_build_yaml(data_dir, yaml_path):
     return yaml_path
 
 
-def create_email_callback(send_email=False):
-    # generate callback function for end of yolo training
-
-    def callback(trainer):
-        # empty callback function
-        if not send_email:
-            return
-
-        # full callback function
-        best_fitness = trainer.best_fitness 
-        save_dir = trainer.save_dir
-        message = f"Training complete.\nBest Fitness: {best_fitness:.4f}\nWeights saved to: {save_dir}/weights"
-        
-        try:
-            send_training_notification("Training complete", message)
-        except Exception as e:
-            print(f"Warning: Could not send email notification. {e}")
-            
-    # return the callback function
-    return callback
-
-
 def get_last_best_weights(runs_dir):
     """
     to save the hassle of having to hard-code the best weights of the previous run,
@@ -114,17 +94,18 @@ def get_last_best_weights(runs_dir):
 
 def main():
     # parameters
-    n_epochs = 3
-    batch_size = 32
-    n_workers = 16
+    n_epochs = 25
+    batch_size = 16
+    n_workers = 4
     run_name = 'chula_training'
-    send_email = False
+    send_email = True
+    terminate_pod = True
 
     # paths for data, yaml, weights
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.abspath(os.path.join(script_dir, "..", "src", "data", "chula_yolo"))
-    runs_dir = os.path.abspath(os.path.join(script_dir, "..", "experiments", "yolo_runs"))
-    yaml_path = os.path.abspath(os.path.join(script_dir, "..", "configs", "dataset_config.yaml"))
+    runs_dir = os.path.abspath(os.path.join(script_dir, "..", "experiments", "yolo_training"))
+    yaml_path = os.path.abspath(os.path.join(script_dir, "..", "src", "data", "chula_yolo", "dataset_config.yaml"))
 
 
     # check for gpu
@@ -151,11 +132,16 @@ def main():
         model = YOLO(best_weights)
     else:
         print("No weights found. Loading base weights.")
-        model = YOLO("yolo26l.pt")
+        if os.path.exists(os.path.abspath(os.path.join(script_dir, "yolo26l.pt"))):
+            model = YOLO(os.path.abspath(os.path.join(script_dir, "yolo26l.pt")))
+        else:
+            model = YOLO("yolo26l.pt")
 
-
-    # email upon completing training if desired
-    model.add_callback("on_train_end", create_email_callback(send_email=send_email))
+    # capture the time first epoch starts (ignoring data loading)
+    epoch_start_time = [0]
+    def capture_start_time(trainer):
+        epoch_start_time[0] = time.time()
+    model.add_callback("on_train_start", capture_start_time)
 
 
     print("Training...")
@@ -168,13 +154,55 @@ def main():
         workers=n_workers,           
         project=runs_dir, 
         name=run_name,
-        cache=True,
-        mosaic=1.0,          
-        mixup=0.1,           
+        cache=False,
+        mosaic=0,              # ALWAYS KEEP AT 0
+        mixup=0,               # ALWAYS KEEP AT 0
+        fliplr=0.5,                 
+        flipud=0.5,                 
         scale=0.7,           
         cos_lr=True,         
         patience=20          
     )
+
+
+    ## Send email notifying completion of training, best fitness, avg epoch time
+    if send_email:
+        # compute time metrics
+        total_train_time = time.time() - epoch_start_time[0]
+        avg_epoch_seconds = total_train_time / n_epochs
+        avg_mins = int(avg_epoch_seconds // 60)
+
+        best_fitness = model.trainer.best_fitness
+
+        message = (
+            f"Training complete.\n"
+            f"Best Fitness: {best_fitness:.4f}\n"
+            f"Average Epoch Time: {avg_mins}m"
+        )
+
+        try:
+            send_training_notification("Training complete", message)
+            print("Notification email sent successfully.")
+        except Exception as e:
+            print(f"Warning: Could not send email notification. {e}")
+        
+
+    ## Terminate runpod upon completion of training
+    if terminate_pod:
+        import runpod
+        pod_id = os.environ.get("RUNPOD_POD_ID")
+        key_path = "/workspace/.runpod_key"
+    
+        if pod_id and os.path.exists(key_path):
+            with open(key_path, 'r') as f:
+                runpod.api_key = f.read().strip()
+            print(f"Terminating pod: {pod_id}")
+            runpod.terminate_pod(pod_id)
+        else:
+            print("Could not auto-terminate: missing RUNPOD_POD_ID or API key file.")
+            if send_email:
+                send_training_notification("Could not terminate pod", "Could not auto-terminate: missing RUNPOD_POD_ID or API key file.")
+
 
 if __name__ == "__main__":
     main()
